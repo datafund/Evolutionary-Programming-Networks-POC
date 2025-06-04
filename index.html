@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolutionary Programming Networks - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23, #1a1a3a);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #00ff88, #0099ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .primary-btn {
+            background: linear-gradient(45deg, #00ff88, #0099ff);
+            color: white;
+        }
+        
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
+        }
+        
+        .secondary-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .secondary-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .simulation-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .canvas-container {
+            position: relative;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #evolutionCanvas {
+            width: 100%;
+            height: 500px;
+            border-radius: 10px;
+            background: radial-gradient(circle at center, #1a1a3a, #0f0f23);
+            cursor: crosshair;
+        }
+        
+        .stats-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stats-panel h3 {
+            color: #00ff88;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+        
+        .stat-value {
+            color: #0099ff;
+            font-weight: bold;
+        }
+        
+        .legend {
+            margin-top: 20px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .explanation {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .explanation h2 {
+            color: #00ff88;
+            margin-bottom: 15px;
+        }
+        
+        .explanation p {
+            line-height: 1.6;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 768px) {
+            .simulation-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Evolutionary Programming Networks</h1>
+            <p>Watch tiny programs evolve, compete, and adapt in real-time</p>
+        </div>
+        
+        <div class="controls">
+            <button class="primary-btn" onclick="startEvolution()">Start Evolution</button>
+            <button class="secondary-btn" onclick="pauseEvolution()">Pause</button>
+            <button class="secondary-btn" onclick="addResource()">Add Resource</button>
+            <button class="secondary-btn" onclick="resetSimulation()">Reset</button>
+        </div>
+        
+        <div class="simulation-container">
+            <div class="canvas-container">
+                <canvas id="evolutionCanvas"></canvas>
+            </div>
+            
+            <div class="stats-panel">
+                <h3>Evolution Stats</h3>
+                <div class="stat-item">
+                    <span>Generation:</span>
+                    <span class="stat-value" id="generation">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Population:</span>
+                    <span class="stat-value" id="population">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Average Fitness:</span>
+                    <span class="stat-value" id="avgFitness">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Best Fitness:</span>
+                    <span class="stat-value" id="bestFitness">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Resources:</span>
+                    <span class="stat-value" id="resources">0</span>
+                </div>
+                
+                <div class="legend">
+                    <h4 style="color: #00ff88; margin-bottom: 10px;">Program Types</h4>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ff4444;"></div>
+                        <span>Aggressive (<span id="aggressiveCount">0</span>)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #44ff44;"></div>
+                        <span>Efficient (<span id="efficientCount">0</span>)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4444ff;"></div>
+                        <span>Cooperative (<span id="cooperativeCount">0</span>)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ffff44;"></div>
+                        <span>Adaptive (<span id="adaptiveCount">0</span>)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ff44ff;"></div>
+                        <span>Reproductive (<span id="reproductiveCount">0</span>)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="explanation">
+            <h2>How It Works</h2>
+            <p><strong>Programs as Digital DNA:</strong> Each colored dot represents a program with genetic traits like energy efficiency, cooperation level, and reproduction rate.</p>
+            <p><strong>Natural Selection:</strong> Programs compete for limited resources. Those with better fitness survive and reproduce, passing their traits to offspring.</p>
+            <p><strong>Mutation & Evolution:</strong> New programs inherit parent traits but with random mutations, leading to gradual evolution of the population.</p>
+            <p><strong>Emergent Behaviors:</strong> Watch as cooperative clusters form, aggressive programs dominate temporarily, then get outcompeted by more efficient variants.</p>
+            <p><strong>Click anywhere</strong> on the simulation to add resources and see how it affects evolution patterns!</p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('evolutionCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Simulation state
+        let programs = [];
+        let resources = [];
+        let generation = 0;
+        let isRunning = false;
+        let animationId;
+        
+        // Simple programming language for evolved programs
+        const INSTRUCTIONS = {
+            MOVE_FORWARD: 0,
+            TURN_LEFT: 1,
+            TURN_RIGHT: 2,
+            SEEK_RESOURCE: 3,
+            SHARE_ENERGY: 4,
+            REPRODUCE: 5,
+            SAVE_ENERGY: 6,
+            EXPLORE: 7,
+            FOLLOW_LEADER: 8,
+            AVOID_CROWD: 9
+        };
+        
+        const INSTRUCTION_NAMES = Object.keys(INSTRUCTIONS);
+        
+        class EvolutionaryProgram {
+            constructor(length = 10) {
+                this.instructions = [];
+                this.programCounter = 0;
+                this.executionStack = [];
+                this.memory = {};
+                this.efficiency = 0;
+                
+                // Generate random program
+                for (let i = 0; i < length; i++) {
+                    this.instructions.push(Math.floor(Math.random() * INSTRUCTION_NAMES.length));
+                }
+                
+                this.calculateEfficiency();
+            }
+            
+            calculateEfficiency() {
+                // Calculate efficiency based on instruction patterns
+                const instructionCounts = {};
+                this.instructions.forEach(inst => {
+                    instructionCounts[inst] = (instructionCounts[inst] || 0) + 1;
+                });
+                
+                // Efficient programs have balanced instruction sets
+                const entropy = Object.values(instructionCounts).reduce((sum, count) => {
+                    const p = count / this.instructions.length;
+                    return sum - (p * Math.log2(p + 0.001));
+                }, 0);
+                
+                this.efficiency = Math.min(1, entropy / 3); // Normalize to 0-1
+            }
+            
+            execute(program, environment) {
+                if (this.instructions.length === 0) return { action: 'idle', value: 0 };
+                
+                const instruction = this.instructions[this.programCounter];
+                this.programCounter = (this.programCounter + 1) % this.instructions.length;
+                
+                switch (instruction) {
+                    case INSTRUCTIONS.MOVE_FORWARD:
+                        return { action: 'move', direction: 'forward', value: program.traits.speed };
+                        
+                    case INSTRUCTIONS.TURN_LEFT:
+                        return { action: 'turn', direction: 'left', value: Math.PI / 4 };
+                        
+                    case INSTRUCTIONS.TURN_RIGHT:
+                        return { action: 'turn', direction: 'right', value: Math.PI / 4 };
+                        
+                    case INSTRUCTIONS.SEEK_RESOURCE:
+                        const nearestResource = environment.resources.reduce((nearest, resource) => {
+                            const distToCurrent = Math.sqrt((resource.x - program.x)**2 + (resource.y - program.y)**2);
+                            const distToNearest = nearest ? Math.sqrt((nearest.x - program.x)**2 + (nearest.y - program.y)**2) : Infinity;
+                            return distToCurrent < distToNearest ? resource : nearest;
+                        }, null);
+                        
+                        if (nearestResource) {
+                            const dx = nearestResource.x - program.x;
+                            const dy = nearestResource.y - program.y;
+                            return { action: 'move_toward', target: nearestResource, value: 0.5 };
+                        }
+                        return { action: 'idle', value: 0 };
+                        
+                    case INSTRUCTIONS.SHARE_ENERGY:
+                        return { action: 'share_energy', value: 10 * program.traits.cooperation };
+                        
+                    case INSTRUCTIONS.REPRODUCE:
+                        return { action: 'attempt_reproduce', value: program.traits.reproduction };
+                        
+                    case INSTRUCTIONS.SAVE_ENERGY:
+                        return { action: 'save_energy', value: 0.9 }; // Reduce energy consumption
+                        
+                    case INSTRUCTIONS.EXPLORE:
+                        return { action: 'explore', value: Math.random() * Math.PI * 2 };
+                        
+                    case INSTRUCTIONS.FOLLOW_LEADER:
+                        const leader = environment.programs.find(p => 
+                            p !== program && p.energy > program.energy && 
+                            Math.sqrt((p.x - program.x)**2 + (p.y - program.y)**2) < 100
+                        );
+                        if (leader) {
+                            return { action: 'move_toward', target: leader, value: 0.3 };
+                        }
+                        return { action: 'idle', value: 0 };
+                        
+                    case INSTRUCTIONS.AVOID_CROWD:
+                        const nearby = environment.programs.filter(p => 
+                            p !== program && Math.sqrt((p.x - program.x)**2 + (p.y - program.y)**2) < 30
+                        );
+                        if (nearby.length > 3) {
+                            return { action: 'move_away', targets: nearby, value: 0.8 };
+                        }
+                        return { action: 'idle', value: 0 };
+                        
+                    default:
+                        return { action: 'idle', value: 0 };
+                }
+            }
+            
+            mutate(mutationRate = 0.1) {
+                const newProgram = new EvolutionaryProgram(0);
+                newProgram.instructions = [...this.instructions];
+                
+                for (let i = 0; i < newProgram.instructions.length; i++) {
+                    if (Math.random() < mutationRate) {
+                        newProgram.instructions[i] = Math.floor(Math.random() * INSTRUCTION_NAMES.length);
+                    }
+                }
+                
+                // Occasional structural mutations
+                if (Math.random() < 0.05) {
+                    if (Math.random() < 0.5 && newProgram.instructions.length < 20) {
+                        // Add instruction
+                        newProgram.instructions.push(Math.floor(Math.random() * INSTRUCTION_NAMES.length));
+                    } else if (newProgram.instructions.length > 3) {
+                        // Remove instruction
+                        newProgram.instructions.splice(Math.floor(Math.random() * newProgram.instructions.length), 1);
+                    }
+                }
+                
+                newProgram.calculateEfficiency();
+                return newProgram;
+            }
+            
+            crossover(otherProgram) {
+                const newProgram = new EvolutionaryProgram(0);
+                const crossoverPoint = Math.floor(Math.random() * Math.min(this.instructions.length, otherProgram.instructions.length));
+                
+                newProgram.instructions = [
+                    ...this.instructions.slice(0, crossoverPoint),
+                    ...otherProgram.instructions.slice(crossoverPoint)
+                ];
+                
+                newProgram.calculateEfficiency();
+                return newProgram;
+            }
+            
+            getInstructionSummary() {
+                const counts = {};
+                this.instructions.forEach(inst => {
+                    const name = INSTRUCTION_NAMES[inst];
+                    counts[name] = (counts[name] || 0) + 1;
+                });
+                return counts;
+            }
+        }
+        
+        // Program types and their characteristics
+        const PROGRAM_TYPES = {
+            AGGRESSIVE: { color: '#ff4444', energy: 0.3, cooperation: 0.1, reproduction: 0.6, speed: 1.5 },
+            EFFICIENT: { color: '#44ff44', energy: 0.8, cooperation: 0.3, reproduction: 0.4, speed: 0.8 },
+            COOPERATIVE: { color: '#4444ff', energy: 0.5, cooperation: 0.9, reproduction: 0.5, speed: 1.0 },
+            ADAPTIVE: { color: '#ffff44', energy: 0.6, cooperation: 0.5, reproduction: 0.7, speed: 1.2 },
+            REPRODUCTIVE: { color: '#ff44ff', energy: 0.4, cooperation: 0.4, reproduction: 0.9, speed: 1.1 }
+        };
+        
+        class Program {
+            constructor(x, y, type = null, parentProgram = null) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                this.type = type || this.randomType();
+                this.traits = { ...PROGRAM_TYPES[this.type] };
+                this.fitness = 0;
+                this.energy = 100;
+                this.age = 0;
+                this.size = 3 + Math.random() * 4;
+                this.vx = (Math.random() - 0.5) * this.traits.speed;
+                this.vy = (Math.random() - 0.5) * this.traits.speed;
+                this.isHovered = false;
+                this.direction = Math.random() * Math.PI * 2;
+                
+                // Evolutionary programming component
+                if (parentProgram) {
+                    this.evolutionaryProgram = parentProgram.mutate(0.2);
+                } else {
+                    this.evolutionaryProgram = new EvolutionaryProgram(8 + Math.floor(Math.random() * 8));
+                }
+                
+                // Performance metrics for program evolution
+                this.programPerformance = {
+                    energyGained: 0,
+                    resourcesFound: 0,
+                    cooperativeActions: 0,
+                    reproductions: 0
+                };
+            }
+            
+            executeAction(action) {
+                switch (action.action) {
+                    case 'move':
+                        if (action.direction === 'forward') {
+                            this.vx += Math.cos(this.direction) * action.value * 0.1;
+                            this.vy += Math.sin(this.direction) * action.value * 0.1;
+                        }
+                        break;
+                        
+                    case 'turn':
+                        if (action.direction === 'left') {
+                            this.direction -= action.value;
+                        } else if (action.direction === 'right') {
+                            this.direction += action.value;
+                        }
+                        break;
+                        
+                    case 'move_toward':
+                        if (action.target) {
+                            const dx = action.target.x - this.x;
+                            const dy = action.target.y - this.y;
+                            const dist = Math.sqrt(dx*dx + dy*dy);
+                            if (dist > 0) {
+                                this.vx += (dx / dist) * action.value;
+                                this.vy += (dy / dist) * action.value;
+                            }
+                        }
+                        break;
+                        
+                    case 'move_away':
+                        if (action.targets) {
+                            let avgX = 0, avgY = 0;
+                            action.targets.forEach(target => {
+                                avgX += target.x;
+                                avgY += target.y;
+                            });
+                            avgX /= action.targets.length;
+                            avgY /= action.targets.length;
+                            
+                            const dx = this.x - avgX;
+                            const dy = this.y - avgY;
+                            const dist = Math.sqrt(dx*dx + dy*dy);
+                            if (dist > 0) {
+                                this.vx += (dx / dist) * action.value;
+                                this.vy += (dy / dist) * action.value;
+                            }
+                        }
+                        break;
+                        
+                    case 'share_energy':
+                        const nearbyPrograms = programs.filter(p => 
+                            p !== this && p.traits.cooperation > 0.3 && // Lowered threshold
+                            Math.sqrt((p.x - this.x)**2 + (p.y - this.y)**2) < 40
+                        );
+                        if (nearbyPrograms.length > 0 && this.energy > 60) {
+                            const shareAmount = action.value * this.traits.cooperation; // Scale by cooperation level
+                            const energyPerProgram = shareAmount / nearbyPrograms.length;
+                            nearbyPrograms.forEach(p => {
+                                p.energy += energyPerProgram;
+                                p.programPerformance.energyGained += energyPerProgram;
+                                // Bonus scales with receiver's cooperation
+                                if (p.traits.cooperation > 0.6) {
+                                    const bonus = energyPerProgram * p.traits.cooperation * 0.2;
+                                    p.energy += bonus;
+                                    p.programPerformance.energyGained += bonus;
+                                }
+                            });
+                            this.energy -= shareAmount;
+                            this.programPerformance.cooperativeActions++;
+                            
+                            // Fitness bonus scales with cooperation level
+                            this.fitness += nearbyPrograms.length * this.traits.cooperation * 3;
+                        }
+                        break;
+                        
+                    case 'save_energy':
+                        this.vx *= action.value; // Reduce movement to save energy
+                        this.vy *= action.value;
+                        break;
+                        
+                    case 'explore':
+                        this.direction = action.value;
+                        this.vx += Math.cos(this.direction) * 0.5;
+                        this.vy += Math.sin(this.direction) * 0.5;
+                        break;
+                        
+                    case 'attempt_reproduce':
+                        // This will be handled in the main reproduction logic
+                        break;
+                }
+            }
+            
+            randomType() {
+                const types = Object.keys(PROGRAM_TYPES);
+                return types[Math.floor(Math.random() * types.length)];
+            }
+            
+            updateColor() {
+                // Determine color based on dominant traits
+                const traits = this.traits;
+                if (traits.energy > 0.6 && traits.cooperation < 0.4) {
+                    this.traits.color = '#44ff44'; // Efficient - Green
+                } else if (traits.cooperation > 0.6) {
+                    this.traits.color = '#4444ff'; // Cooperative - Blue  
+                } else if (traits.reproduction > 0.7) {
+                    this.traits.color = '#ff44ff'; // Reproductive - Purple
+                } else if (traits.speed > 1.3 || (traits.energy > 0.5 && traits.reproduction > 0.6)) {
+                    this.traits.color = '#ffff44'; // Adaptive - Yellow
+                } else {
+                    this.traits.color = '#ff4444'; // Aggressive - Red
+                }
+            }
+            
+            update() {
+                // Execute evolutionary program
+                const environment = {
+                    resources: resources,
+                    programs: programs,
+                    canvas: { width: canvas.width, height: canvas.height }
+                };
+                
+                const programAction = this.evolutionaryProgram.execute(this, environment);
+                this.executeAction(programAction);
+                
+                // Traditional movement and physics
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Boundary bouncing
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+                this.x = Math.max(0, Math.min(canvas.width, this.x));
+                this.y = Math.max(0, Math.min(canvas.height, this.y));
+                
+                // Energy consumption based on efficiency and program complexity
+                const programEfficiency = this.evolutionaryProgram.efficiency;
+                const energyCost = (1 - this.traits.energy) * 0.3 + (1 - programEfficiency) * 0.2;
+                this.energy -= energyCost;
+                this.age++;
+                
+                // Seek resources (now enhanced by evolutionary programming)
+                this.seekResources();
+                
+                // Update fitness based on performance and program efficiency
+                const cooperativeBonus = this.traits.cooperation > 0.6 ? 
+                    this.programPerformance.cooperativeActions * 5 : 0; // Reduced from 10
+                
+                this.fitness = this.energy + (this.age * 0.1) + 
+                              (this.traits.cooperation * 40) + // Reduced from 50
+                              (programEfficiency * 30) +
+                              (this.programPerformance.energyGained * 0.5) +
+                              cooperativeBonus;
+            }
+            
+            seekResources() {
+                // Evolved sensing range based on efficiency trait
+                const sensingRange = 30 + (this.traits.energy * 80); // 30-110 pixel range
+                
+                const nearbyResources = resources.filter(r => 
+                    Math.sqrt((r.x - this.x)**2 + (r.y - this.y)**2) < sensingRange
+                );
+                
+                if (nearbyResources.length > 0) {
+                    // Evolved targeting strategy
+                    let target;
+                    if (this.traits.cooperation > 0.6) {
+                        // Cooperative: target largest resources to share
+                        target = nearbyResources.reduce((prev, curr) => curr.value > prev.value ? curr : prev);
+                    } else if (this.traits.speed > 1.2) {
+                        // Fast/Adaptive: target closest resource
+                        target = nearbyResources.reduce((prev, curr) => 
+                            Math.sqrt((curr.x - this.x)**2 + (curr.y - this.y)**2) < 
+                            Math.sqrt((prev.x - this.x)**2 + (prev.y - this.y)**2) ? curr : prev
+                        );
+                    } else {
+                        // Others: balance distance and value
+                        target = nearbyResources.reduce((prev, curr) => {
+                            const prevScore = prev.value / (Math.sqrt((prev.x - this.x)**2 + (prev.y - this.y)**2) + 1);
+                            const currScore = curr.value / (Math.sqrt((curr.x - this.x)**2 + (curr.y - this.y)**2) + 1);
+                            return currScore > prevScore ? curr : prev;
+                        });
+                    }
+                    
+                    // Evolved movement speed and steering
+                    const dx = target.x - this.x;
+                    const dy = target.y - this.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist > 0) {
+                        const steeringForce = 0.05 + (this.traits.speed * 0.15); // 0.05-0.2 steering
+                        this.vx += (dx / dist) * steeringForce;
+                        this.vy += (dy / dist) * steeringForce;
+                        
+                        // Velocity limits based on speed trait
+                        const maxSpeed = 0.5 + (this.traits.speed * 2); // 0.5-2.5 max speed
+                        const currentSpeed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
+                        if (currentSpeed > maxSpeed) {
+                            this.vx = (this.vx / currentSpeed) * maxSpeed;
+                            this.vy = (this.vy / currentSpeed) * maxSpeed;
+                        }
+                    }
+                    
+                    // Evolved consumption radius
+                    const consumeRadius = 10 + (this.size * 2);
+                    if (dist < consumeRadius) {
+                        const consumptionEfficiency = this.traits.cooperation > 0.5 ? 0.8 : 1.2;
+                        this.energy += target.value * consumptionEfficiency;
+                        resources.splice(resources.indexOf(target), 1);
+                    }
+                } else {
+                    // No resources found - evolved exploration behavior
+                    if (this.traits.reproduction > 0.7) {
+                        // Reproductive: random walk to find new areas
+                        this.vx += (Math.random() - 0.5) * 0.2;
+                        this.vy += (Math.random() - 0.5) * 0.2;
+                    } else if (this.traits.cooperation > 0.6) {
+                        // Cooperative: follow other successful programs
+                        const successful = programs.filter(p => 
+                            p !== this && p.energy > this.energy && 
+                            Math.sqrt((p.x - this.x)**2 + (p.y - this.y)**2) < 100
+                        );
+                        if (successful.length > 0) {
+                            const leader = successful[0];
+                            const dx = leader.x - this.x;
+                            const dy = leader.y - this.y;
+                            const dist = Math.sqrt(dx*dx + dy*dy);
+                            if (dist > 0) {
+                                this.vx += (dx / dist) * 0.1;
+                                this.vy += (dy / dist) * 0.1;
+                            }
+                        }
+                    }
+                }
+                
+                // Evolved momentum damping
+                const damping = 0.98 + (this.traits.energy * 0.015); // More efficient = less friction
+                this.vx *= damping;
+                this.vy *= damping;
+            }
+            
+            canReproduce() {
+                return this.energy > 80 && this.age > 50 && Math.random() < this.traits.reproduction * 0.01;
+            }
+            
+            reproduce() {
+                if (!this.canReproduce()) return null;
+                
+                this.energy -= 30; // Cost of reproduction
+                this.programPerformance.reproductions++;
+                
+                // 20% chance of completely new random type (genetic diversity)
+                const newType = Math.random() < 0.2 ? this.randomType() : this.type;
+                
+                // Find potential mate for program crossover
+                const nearbyMates = programs.filter(p => 
+                    p !== this && p.canReproduce() && 
+                    Math.sqrt((p.x - this.x)**2 + (p.y - this.y)**2) < 50
+                );
+                
+                let childProgram;
+                if (nearbyMates.length > 0 && Math.random() < 0.3) {
+                    // Sexual reproduction - crossover programs
+                    const mate = nearbyMates[Math.floor(Math.random() * nearbyMates.length)];
+                    childProgram = this.evolutionaryProgram.crossover(mate.evolutionaryProgram);
+                    mate.energy -= 15; // Mate also pays reproduction cost
+                } else {
+                    // Asexual reproduction - mutation only
+                    childProgram = this.evolutionaryProgram.mutate(0.3);
+                }
+                
+                // Create offspring with evolved program
+                const child = new Program(
+                    this.x + (Math.random() - 0.5) * 20,
+                    this.y + (Math.random() - 0.5) * 20,
+                    newType,
+                    childProgram
+                );
+                
+                // Inherit some performance traits
+                child.evolutionaryProgram = childProgram;
+                
+                // More aggressive mutations and trait mixing
+                Object.keys(child.traits).forEach(trait => {
+                    if (Math.random() < 0.3) { // 30% mutation chance
+                        if (Math.random() < 0.1) {
+                            // 10% chance of dramatic mutation
+                            child.traits[trait] = Math.random();
+                        } else {
+                            // Normal mutation with larger steps for behavioral traits
+                            let mutationSize = trait === 'speed' ? 0.6 : 0.4;
+                            child.traits[trait] += (Math.random() - 0.5) * mutationSize;
+                            child.traits[trait] = Math.max(0, Math.min(trait === 'speed' ? 3 : 1, child.traits[trait]));
+                        }
+                    }
+                });
+                
+                // Update speed based on evolved traits
+                child.vx = (Math.random() - 0.5) * child.traits.speed;
+                child.vy = (Math.random() - 0.5) * child.traits.speed;
+                
+                // Update color based on new traits
+                child.updateColor();
+                
+                return child;
+            }
+            
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.traits.color;
+                ctx.globalAlpha = Math.min(1, this.energy / 100);
+                ctx.fill();
+                
+                // Draw energy ring
+                if (this.energy < 50) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size + 2, 0, Math.PI * 2);
+                    ctx.strokeStyle = this.energy < 20 ? '#ff0000' : '#ffaa00';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+                
+                // Hover effect
+                if (this.isHovered) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size + 5, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Show info tooltip
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+                    ctx.fillRect(this.x + 10, this.y - 50, 200, 100);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '11px Arial';
+                    ctx.fillText(`Type: ${this.type}`, this.x + 15, this.y - 35);
+                    ctx.fillText(`Energy: ${this.energy.toFixed(1)}`, this.x + 15, this.y - 23);
+                    ctx.fillText(`Fitness: ${this.fitness.toFixed(1)}`, this.x + 15, this.y - 11);
+                    ctx.fillText(`Age: ${this.age}`, this.x + 15, this.y + 1);
+                    ctx.fillText(`Program Efficiency: ${(this.evolutionaryProgram.efficiency * 100).toFixed(0)}%`, this.x + 15, this.y + 13);
+                    ctx.fillText(`Instructions: ${this.evolutionaryProgram.instructions.length}`, this.x + 15, this.y + 25);
+                    ctx.fillText(`Resources Found: ${this.programPerformance.resourcesFound}`, this.x + 15, this.y + 37);
+                }
+                
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        class Resource {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.value = 20 + Math.random() * 30;
+                this.size = 2 + (this.value / 50) * 3;
+            }
+            
+            draw() {
+                const rectSize = this.size * 2;
+                
+                // Main rectangle
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(this.x - rectSize/2, this.y - rectSize/2, rectSize, rectSize);
+                
+                // Pulsing border effect
+                const pulse = Math.sin(Date.now() * 0.005) * 0.5 + 0.5;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1 + pulse;
+                ctx.globalAlpha = 0.6;
+                ctx.strokeRect(this.x - rectSize/2 - pulse, this.y - rectSize/2 - pulse, rectSize + pulse*2, rectSize + pulse*2);
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        function initializeSimulation() {
+            programs = [];
+            resources = [];
+            generation = 0;
+            
+            // Create initial population
+            for (let i = 0; i < 50; i++) {
+                programs.push(new Program());
+            }
+            
+            // Add initial resources
+            for (let i = 0; i < 20; i++) {
+                resources.push(new Resource(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height
+                ));
+            }
+        }
+        
+        function updateSimulation() {
+            // Update programs
+            programs.forEach(program => program.update());
+            
+            // Handle reproduction
+            const newPrograms = [];
+            programs.forEach(program => {
+                const child = program.reproduce();
+                if (child) newPrograms.push(child);
+            });
+            programs.push(...newPrograms);
+            
+            // Dynamic environmental pressure - change resource availability
+            if (generation % 50 === 0 && generation > 0) {
+                // Periodic resource scarcity to shake up evolution
+                resources = resources.slice(0, Math.floor(resources.length * 0.3));
+            }
+            
+            // Anti-cooperation pressure occasionally (resource competition)
+            if (generation % 75 === 0 && generation > 0) {
+                // Add scarce high-value resources that favor fast, aggressive programs
+                for (let i = 0; i < 5; i++) {
+                    const superResource = new Resource(
+                        Math.random() * canvas.width,
+                        Math.random() * canvas.height
+                    );
+                    superResource.value = 80; // High value resources
+                    superResource.size = 8;
+                    resources.push(superResource);
+                }
+            }
+            
+            // Natural selection - but keep some diversity
+            programs = programs.filter(program => program.energy > 0 && program.age < 2000);
+            
+            // Population control with diversity preservation
+            if (programs.length > 120) {
+                // Sort by fitness but preserve some variety
+                programs.sort((a, b) => b.fitness - a.fitness);
+                
+                // Keep top 60% by fitness
+                const topPerformers = programs.slice(0, Math.floor(programs.length * 0.6));
+                
+                // Keep 20% random survivors for diversity
+                const survivors = programs.slice(Math.floor(programs.length * 0.6));
+                const randomSurvivors = [];
+                for (let i = 0; i < Math.min(20, survivors.length); i++) {
+                    const randomIndex = Math.floor(Math.random() * survivors.length);
+                    randomSurvivors.push(survivors.splice(randomIndex, 1)[0]);
+                }
+                
+                // Add 20% completely new random programs
+                const newRandomPrograms = [];
+                for (let i = 0; i < 20; i++) {
+                    newRandomPrograms.push(new Program());
+                }
+                
+                programs = [...topPerformers, ...randomSurvivors, ...newRandomPrograms];
+                generation++;
+            }
+            
+            // Add random resources with varying abundance
+            const resourceChance = 0.15 + Math.sin(generation * 0.1) * 0.1; // Cyclical abundance
+            if (Math.random() < resourceChance && resources.length < 40) {
+                resources.push(new Resource(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height
+                ));
+            }
+            
+            updateStats();
+        }
+        
+        function drawSimulation() {
+            // Clear canvas with fade effect
+            ctx.fillStyle = 'rgba(15, 15, 35, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw resources
+            resources.forEach(resource => resource.draw());
+            
+            // Draw connections between ALL cooperative programs (not just blue ones)
+            programs.forEach(program => {
+                if (program.traits.cooperation > 0.4) { // Any program can cooperate
+                    const nearby = programs.filter(other => 
+                        other !== program && 
+                        other.traits.cooperation > 0.4 &&
+                        Math.sqrt((other.x - program.x)**2 + (other.y - program.y)**2) < 80
+                    );
+                    
+                    nearby.forEach(other => {
+                        ctx.beginPath();
+                        ctx.moveTo(program.x, program.y);
+                        ctx.lineTo(other.x, other.y);
+                        
+                        // Connection strength based on cooperation levels
+                        const avgCooperation = (program.traits.cooperation + other.traits.cooperation) / 2;
+                        const alpha = avgCooperation * 0.6; // 0 to 0.6 alpha
+                        const lineWidth = 1 + avgCooperation * 2; // 1 to 3 width
+                        
+                        // Color based on cooperation strength
+                        if (avgCooperation > 0.7) {
+                            ctx.strokeStyle = `rgba(68, 68, 255, ${alpha})`; // Blue for high cooperation
+                        } else if (avgCooperation > 0.5) {
+                            ctx.strokeStyle = `rgba(255, 255, 68, ${alpha})`; // Yellow for medium cooperation
+                        } else {
+                            ctx.strokeStyle = `rgba(255, 136, 68, ${alpha})`; // Orange for low cooperation
+                        }
+                        
+                        ctx.lineWidth = lineWidth;
+                        ctx.stroke();
+                    });
+                    
+                    // Draw cooperation halos for highly cooperative programs
+                    if (nearby.length >= 2 && program.traits.cooperation > 0.6) {
+                        ctx.beginPath();
+                        ctx.arc(program.x, program.y, program.size + 6, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(68, 255, 68, ${program.traits.cooperation * 0.8})`;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    }
+                }
+            });
+            
+            // Draw programs on top
+            programs.forEach(program => program.draw());
+        }
+        
+        function updateStats() {
+            document.getElementById('generation').textContent = generation;
+            document.getElementById('population').textContent = programs.length;
+            document.getElementById('resources').textContent = resources.length;
+            
+            if (programs.length > 0) {
+                const avgFitness = programs.reduce((sum, p) => sum + p.fitness, 0) / programs.length;
+                const bestFitness = Math.max(...programs.map(p => p.fitness));
+                
+                document.getElementById('avgFitness').textContent = avgFitness.toFixed(1);
+                document.getElementById('bestFitness').textContent = bestFitness.toFixed(1);
+                
+                // Count program types by color
+                const typeCounts = {
+                    aggressive: 0,
+                    efficient: 0,
+                    cooperative: 0,
+                    adaptive: 0,
+                    reproductive: 0
+                };
+                
+                programs.forEach(program => {
+                    const color = program.traits.color;
+                    switch(color) {
+                        case '#ff4444': typeCounts.aggressive++; break;
+                        case '#44ff44': typeCounts.efficient++; break;
+                        case '#4444ff': typeCounts.cooperative++; break;
+                        case '#ffff44': typeCounts.adaptive++; break;
+                        case '#ff44ff': typeCounts.reproductive++; break;
+                    }
+                });
+                
+                document.getElementById('aggressiveCount').textContent = typeCounts.aggressive;
+                document.getElementById('efficientCount').textContent = typeCounts.efficient;
+                document.getElementById('cooperativeCount').textContent = typeCounts.cooperative;
+                document.getElementById('adaptiveCount').textContent = typeCounts.adaptive;
+                document.getElementById('reproductiveCount').textContent = typeCounts.reproductive;
+            }
+        }
+        
+        function animate() {
+            if (isRunning) {
+                updateSimulation();
+            }
+            drawSimulation(); // Always draw, even when paused
+            
+            if (isRunning) {
+                animationId = requestAnimationFrame(animate);
+            } else {
+                // When paused, still need to redraw for hover effects
+                animationId = requestAnimationFrame(animate);
+            }
+        }
+        
+        // Control functions
+        function startEvolution() {
+            if (!isRunning) {
+                isRunning = true;
+                if (!animationId) {
+                    animate(); // Only start animation if not already running
+                }
+            }
+        }
+        
+        function pauseEvolution() {
+            isRunning = false;
+            // Don't cancel animation frame - keep running for hover effects
+        }
+        
+        function resetSimulation() {
+            pauseEvolution();
+            initializeSimulation();
+            drawSimulation();
+            updateStats();
+        }
+        
+        function addResource() {
+            resources.push(new Resource(
+                Math.random() * canvas.width,
+                Math.random() * canvas.height
+            ));
+        }
+        
+        // Canvas click and hover handlers
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            resources.push(new Resource(x, y));
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // Check hover for programs
+            programs.forEach(program => {
+                const distance = Math.sqrt((program.x - mouseX)**2 + (program.y - mouseY)**2);
+                program.isHovered = distance < program.size + 5;
+            });
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            programs.forEach(program => {
+                program.isHovered = false;
+            });
+        });
+        
+        // Initialize
+        initializeSimulation();
+        drawSimulation();
+        updateStats();
+    </script>
+</body>
+</html>
