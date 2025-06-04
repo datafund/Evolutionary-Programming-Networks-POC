@@ -117,4 +117,4 @@ TBD
 
 Corresponding Author: Tadej Fius
 Affiliation: Datafund
-Email: [email]
+Email: t@datafund.io
