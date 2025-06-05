@@ -115,6 +115,9 @@ The theoretical foundations presented here establish EPNs as a distinct computat
 References
 TBD
 
+![image](https://github.com/user-attachments/assets/25a3c4b3-a0b5-4773-8bbc-8af5d8624633)
+
+
 Corresponding Author: Tadej Fius
 Affiliation: Datafund
 Email: t@datafund.io
